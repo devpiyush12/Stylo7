@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { withSuspense } from './pages';
 import { MainLayout, AdminLayout } from './components/layout';
@@ -44,7 +44,7 @@ const AdminRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
+    <>
       {/* Toast notifications */}
       <ToastContainer />
       
@@ -126,7 +126,7 @@ function App() {
           </div>
         } />
       </Routes>
-    </Router>
+    </>
   );
 }
 

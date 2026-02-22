@@ -57,6 +57,8 @@ services:
       MSG91_ROUTE: ${MSG91_ROUTE:-4}
     volumes:
       - backend_logs:/app/logs
+    ports:
+      - "5000:5000"
     networks:
       - stylo7-network
     healthcheck:
@@ -78,7 +80,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - stylo7-network
     healthcheck:
