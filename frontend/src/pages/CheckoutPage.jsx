@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { getCart } from '../store/slices/cartSlice';
+import { fetchCart } from '../store/slices/cartSlice';
 import { createOrder } from '../store/slices/ordersSlice';
 import { useAuth } from '../hooks/useAuth';
 import { PageLoader } from '../components/common/Loader';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
-import { formatPrice, validateAddress, showToast } from '../utils';
+import { formatPrice, validateAddress, addToast } from '../utils';
 
 /**
  * CheckoutPage - Checkout flow
@@ -36,7 +36,7 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
   useEffect(() => {
-    dispatch(getCart());
+    dispatch(fetchCart());
   }, [dispatch]);
 
   useEffect(() => {

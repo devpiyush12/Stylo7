@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getCart, applyCoupon, removeCoupon } from '../store/slices/cartSlice';
+import { fetchCart, applyCoupon, removeCoupon } from '../store/slices/cartSlice';
 import { CartItem } from '../components/features';
 import { PageLoader } from '../components/common/Loader';
 import Button from '../components/common/Button';
@@ -21,7 +21,7 @@ const CartPage = () => {
   const [couponLoading, setCouponLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(getCart());
+    dispatch(fetchCart());
   }, [dispatch]);
 
   const handleApplyCoupon = async () => {

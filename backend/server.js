@@ -14,19 +14,19 @@ const cron = require('node-cron');
 const path = require('path');
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
-const cartRoutes = require('./routes/cartRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const inventoryRoutes = require('./routes/inventoryRoutes');
-const userRoutes = require('./routes/userRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const couponRoutes = require('./routes/couponRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const cartRoutes = require('./routes/cart');
+const orderRoutes = require('./routes/orders');
+const paymentRoutes = require('./routes/payments');
+const inventoryRoutes = require('./routes/inventory');
+const userRoutes = require('./routes/users');
+const reviewRoutes = require('./routes/reviews');
+const couponRoutes = require('./routes/coupons');
+const adminRoutes = require('./routes/admin');
 
 // Import middleware
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 
 // Import scheduled tasks
 const { checkLowStock, sendOrderReminders } = require('./utils/scheduledTasks');

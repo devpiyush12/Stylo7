@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getOrderDetails } from '../store/slices/ordersSlice';
+import { fetchOrderById } from '../store/slices/ordersSlice';
 import { PageLoader } from '../components/common/Loader';
 import { StatusBadge } from '../components/common/Badge';
 import Button from '../components/common/Button';
@@ -16,7 +16,7 @@ const OrderDetailPage = () => {
   const { currentOrder: order, loading } = useSelector((state) => state.orders);
 
   useEffect(() => {
-    dispatch(getOrderDetails(id));
+    dispatch(fetchOrderById(id));
   }, [dispatch, id]);
 
   if (loading) return <PageLoader />;

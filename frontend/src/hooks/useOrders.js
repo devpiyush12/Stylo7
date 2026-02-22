@@ -1,149 +1,78 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  fetchOrdersStart,
-  fetchOrdersSuccess,
-  fetchOrdersFailure,
-  fetchOrderStart,
-  fetchOrderSuccess,
-  fetchOrderFailure,
-  createOrderStart,
-  createOrderSuccess,
-  createOrderFailure,
-  cancelOrderStart,
-  cancelOrderSuccess,
-  cancelOrderFailure,
+  fetchOrders as fetchOrdersAction,
+  fetchOrderById,
+  createOrder as createOrderAction,
+  cancelOrder as cancelOrderAction,
+  trackOrder as trackOrderAction,
+  clearCurrentOrder,
   selectOrders,
-  selectOrder,
+  selectCurrentOrder,
   selectOrdersPagination,
   selectOrdersLoading,
+  selectOrderCreating,
   selectOrdersError
 } from '../store/slices/ordersSlice';
 import api from '../api';
 
-/**
- * Custom hook for orders operations
- */
 export function useOrders() {
   const dispatch = useDispatch();
   
   const orders = useSelector(selectOrders);
-  const order = useSelector(selectOrder);
+  const order = useSelector(selectCurrentOrder);
   const pagination = useSelector(selectOrdersPagination);
   const loading = useSelector(selectOrdersLoading);
+  const creating = useSelector(selectOrderCreating);
   const error = useSelector(selectOrdersError);
 
-  /**
-   * Fetch user's orders
-   */
-  const fetchOrders = useCallback(async (params = {}) => {
-    try {
-      dispatch(fetchOrdersStart());
-      
-      const queryParams = new URLSearchParams();
-      if (params.page) queryParams.set('page', params.page);
-      if (params.limit) queryParams.set('limit', params.limit);
-      if (params.status) queryParams.set('status', params.status);
+  const handleFetchOrders = useCallback(async (params = {}) => {
+    const result = await dispatch(fetchOrdersAction(params)).unwrap();
+    return { success: true, data: result };
+  }, [dispatch]);
 
-      const { data } = await api.get(`/orders?${queryParams.toString()}`);
-      dispatch(fetchOrdersSuccess(data.data));
-      
-      return { success: true, data: data.data };
+  const handleFetchOrder = useCallback(async (orderId) => {
+    const result = await dispatch(fetchOrderById(orderId)).unwrap();
+    return { success: true, order: result };
+  }, [dispatch]);
+
+  const handleCreateOrder = useCallback(async (orderData) => {
+    try {
+      const result = await dispatch(createOrderAction(orderData)).unwrap();
+      return { success: true, order: result };
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch orders';
-      dispatch(fetchOrdersFailure(message));
-      return { success: false, error: message };
+      return { success: false, error: err.message || 'Failed to create order' };
     }
   }, [dispatch]);
 
-  /**
-   * Fetch single order by ID
-   */
-  const fetchOrder = useCallback(async (orderId) => {
-    try {
-      dispatch(fetchOrderStart());
-      const { data } = await api.get(`/orders/${orderId}`);
-      dispatch(fetchOrderSuccess(data.data));
-      return { success: true, order: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch order';
-      dispatch(fetchOrderFailure(message));
-      return { success: false, error: message };
-    }
+  const handleCancelOrder = useCallback(async (orderId, reason) => {
+    const result = await dispatch(cancelOrderAction({ orderId, reason })).unwrap();
+    return { success: true, order: result };
   }, [dispatch]);
 
-  /**
-   * Create new order
-   */
-  const createOrder = useCallback(async (orderData) => {
-    try {
-      dispatch(createOrderStart());
-      const { data } = await api.post('/orders', orderData);
-      dispatch(createOrderSuccess(data.data));
-      return { success: true, order: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to create order';
-      dispatch(createOrderFailure(message));
-      return { success: false, error: message, errors: err.response?.data?.errors };
-    }
+  const handleTrackOrder = useCallback(async (orderId) => {
+    const result = await dispatch(trackOrderAction(orderId)).unwrap();
+    return { success: true, tracking: result };
   }, [dispatch]);
 
-  /**
-   * Cancel order
-   */
-  const cancelOrder = useCallback(async (orderId, reason) => {
-    try {
-      dispatch(cancelOrderStart());
-      const { data } = await api.post(`/orders/${orderId}/cancel`, { reason });
-      dispatch(cancelOrderSuccess(data.data));
-      return { success: true, order: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to cancel order';
-      dispatch(cancelOrderFailure(message));
-      return { success: false, error: message };
-    }
+  const clearOrder = useCallback(() => {
+    dispatch(clearCurrentOrder());
   }, [dispatch]);
 
-  /**
-   * Get order invoice PDF URL
-   */
   const getInvoiceUrl = useCallback((orderId) => {
     return `${api.defaults.baseURL}/orders/${orderId}/invoice`;
   }, []);
 
-  /**
-   * Track order status
-   */
-  const trackOrder = useCallback(async (orderId) => {
-    try {
-      const { data } = await api.get(`/orders/${orderId}/track`);
-      return { success: true, tracking: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to track order';
-      return { success: false, error: message };
-    }
-  }, []);
-
-  /**
-   * Get orders by status
-   */
   const getOrdersByStatus = useCallback((status) => {
-    return orders.filter(order => order.status === status);
+    return orders.filter(o => o.status === status);
   }, [orders]);
 
-  /**
-   * Get recent orders (last 30 days)
-   */
   const getRecentOrders = useCallback(() => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    return orders.filter(order => new Date(order.createdAt) >= thirtyDaysAgo);
+    return orders.filter(o => new Date(o.createdAt) >= thirtyDaysAgo);
   }, [orders]);
 
-  /**
-   * Calculate order statistics
-   */
   const getOrderStats = useCallback(() => {
     const stats = {
       total: orders.length,
@@ -155,15 +84,15 @@ export function useOrders() {
       totalSpent: 0
     };
 
-    orders.forEach(order => {
-      if (order.status === 'pending') stats.pending++;
-      else if (order.status === 'processing') stats.processing++;
-      else if (order.status === 'shipped') stats.shipped++;
-      else if (order.status === 'delivered') stats.delivered++;
-      else if (order.status === 'cancelled') stats.cancelled++;
+    orders.forEach(o => {
+      if (o.status === 'pending') stats.pending++;
+      else if (o.status === 'processing') stats.processing++;
+      else if (o.status === 'shipped') stats.shipped++;
+      else if (o.status === 'delivered') stats.delivered++;
+      else if (o.status === 'cancelled') stats.cancelled++;
       
-      if (order.status !== 'cancelled') {
-        stats.totalSpent += order.total;
+      if (o.status !== 'cancelled') {
+        stats.totalSpent += o.total;
       }
     });
 
@@ -175,13 +104,15 @@ export function useOrders() {
     order,
     pagination,
     loading,
+    creating,
     error,
-    fetchOrders,
-    fetchOrder,
-    createOrder,
-    cancelOrder,
+    fetchOrders: handleFetchOrders,
+    fetchOrder: handleFetchOrder,
+    createOrder: handleCreateOrder,
+    cancelOrder: handleCancelOrder,
+    trackOrder: handleTrackOrder,
+    clearOrder,
     getInvoiceUrl,
-    trackOrder,
     getOrdersByStatus,
     getRecentOrders,
     getOrderStats

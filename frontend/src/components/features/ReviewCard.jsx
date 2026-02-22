@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { markReviewHelpful } from '../../store/slices/productsSlice';
+import api from '../../api';
 import Badge, { StatusBadge } from '../common/Badge';
 import Button from '../common/Button';
 
@@ -10,7 +9,6 @@ import Button from '../common/Button';
  * ReviewCard Component - Display product review
  */
 const ReviewCard = ({ review, showProduct = false, loading = false }) => {
-  const dispatch = useDispatch();
   const [voted, setVoted] = useState(false);
 
   if (loading) {
@@ -54,10 +52,14 @@ const ReviewCard = ({ review, showProduct = false, loading = false }) => {
     ));
   };
 
-  const handleHelpful = () => {
+  const handleHelpful = async () => {
     if (voted) return;
-    dispatch(markReviewHelpful(_id));
-    setVoted(true);
+    try {
+      await api.post(`/reviews/${_id}/helpful`);
+      setVoted(true);
+    } catch (err) {
+      console.error('Failed to mark helpful:', err);
+    }
   };
 
   return (

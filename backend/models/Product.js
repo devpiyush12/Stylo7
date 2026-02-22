@@ -218,8 +218,7 @@ productSchema.pre('save', function(next) {
   
   this.slug = slugify(this.name, {
     lower: true,
-    strict: true,
-    replace: /\s+/g, '-'
+    strict: true
   });
   
   // Calculate discount percentage

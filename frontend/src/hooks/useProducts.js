@@ -1,196 +1,92 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import {
-  fetchProductsStart,
-  fetchProductsSuccess,
-  fetchProductsFailure,
-  fetchProductStart,
-  fetchProductSuccess,
-  fetchProductFailure,
-  fetchCategoriesStart,
-  fetchCategoriesSuccess,
-  fetchCategoriesFailure,
-  fetchFeaturedStart,
-  fetchFeaturedSuccess,
-  fetchFeaturedFailure,
-  setSearchQuery,
+  fetchProducts,
+  fetchProductById,
+  fetchFeaturedProducts,
+  fetchCategories,
+  searchProducts as searchProductsAction,
   setFilters,
   clearFilters,
   setSortBy,
   setPage,
   selectProducts,
-  selectProduct,
+  selectCurrentProduct,
+  selectFeaturedProducts,
   selectCategories,
-  selectFeatured,
-  selectPagination,
-  selectFilters,
-  selectSearchQuery,
-  selectSortBy,
+  selectSearchResults,
+  selectProductsPagination,
+  selectProductsFilters,
   selectProductsLoading,
   selectProductsError
 } from '../store/slices/productsSlice';
-import api from '../api';
 
-/**
- * Custom hook for products operations
- */
 export function useProducts() {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Selectors
   const products = useSelector(selectProducts);
-  const product = useSelector(selectProduct);
+  const product = useSelector(selectCurrentProduct);
   const categories = useSelector(selectCategories);
-  const featured = useSelector(selectFeatured);
-  const pagination = useSelector(selectPagination);
-  const filters = useSelector(selectFilters);
-  const searchQuery = useSelector(selectSearchQuery);
-  const sortBy = useSelector(selectSortBy);
+  const featured = useSelector(selectFeaturedProducts);
+  const searchResults = useSelector(selectSearchResults);
+  const pagination = useSelector(selectProductsPagination);
+  const filters = useSelector(selectProductsFilters);
   const loading = useSelector(selectProductsLoading);
   const error = useSelector(selectProductsError);
 
-  /**
-   * Fetch products list with filters
-   */
-  const fetchProducts = useCallback(async (params = {}) => {
-    try {
-      dispatch(fetchProductsStart());
-      
-      const queryParams = new URLSearchParams();
-      
-      // Add filters
-      if (params.search || searchQuery) {
-        queryParams.set('search', params.search || searchQuery);
-      }
-      if (params.category || filters.category) {
-        queryParams.set('category', params.category || filters.category);
-      }
-      if (params.minPrice || filters.minPrice) {
-        queryParams.set('minPrice', params.minPrice || filters.minPrice);
-      }
-      if (params.maxPrice || filters.maxPrice) {
-        queryParams.set('maxPrice', params.maxPrice || filters.maxPrice);
-      }
-      if (params.inStock !== undefined ? params.inStock : filters.inStock) {
-        queryParams.set('inStock', 'true');
-      }
-      if (params.sort || sortBy) {
-        queryParams.set('sort', params.sort || sortBy);
-      }
-      if (params.page) {
-        queryParams.set('page', params.page);
-      }
-      if (params.limit) {
-        queryParams.set('limit', params.limit);
-      }
-      
-      // Size and color filters
-      if (filters.sizes?.length) {
-        queryParams.set('sizes', filters.sizes.join(','));
-      }
-      if (filters.colors?.length) {
-        queryParams.set('colors', filters.colors.join(','));
-      }
+  const handleFetchProducts = useCallback(async (params = {}) => {
+    const queryParams = {};
+    
+    if (params.search) queryParams.search = params.search;
+    if (params.category || filters.category) queryParams.category = params.category || filters.category;
+    if (params.minPrice || filters.minPrice) queryParams.minPrice = params.minPrice || filters.minPrice;
+    if (params.maxPrice || filters.maxPrice) queryParams.maxPrice = params.maxPrice || filters.maxPrice;
+    if (params.sort) queryParams.sort = params.sort;
+    if (params.page) queryParams.page = params.page;
+    if (params.limit) queryParams.limit = params.limit;
 
-      const { data } = await api.get(`/products?${queryParams.toString()}`);
-      dispatch(fetchProductsSuccess(data.data));
-      
-      return { success: true, data: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch products';
-      dispatch(fetchProductsFailure(message));
-      return { success: false, error: message };
-    }
-  }, [dispatch, searchQuery, filters, sortBy]);
+    const result = await dispatch(fetchProducts(queryParams)).unwrap();
+    return { success: true, data: result };
+  }, [dispatch, filters]);
 
-  /**
-   * Fetch single product by ID or slug
-   */
-  const fetchProduct = useCallback(async (id) => {
-    try {
-      dispatch(fetchProductStart());
-      const { data } = await api.get(`/products/${id}`);
-      dispatch(fetchProductSuccess(data.data));
-      return { success: true, product: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch product';
-      dispatch(fetchProductFailure(message));
-      return { success: false, error: message };
-    }
+  const handleFetchProduct = useCallback(async (id) => {
+    const result = await dispatch(fetchProductById(id)).unwrap();
+    return { success: true, product: result };
   }, [dispatch]);
 
-  /**
-   * Fetch categories
-   */
-  const fetchCategories = useCallback(async () => {
-    try {
-      dispatch(fetchCategoriesStart());
-      const { data } = await api.get('/products/categories');
-      dispatch(fetchCategoriesSuccess(data.data));
-      return { success: true, categories: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch categories';
-      dispatch(fetchCategoriesFailure(message));
-      return { success: false, error: message };
-    }
+  const handleFetchCategories = useCallback(async () => {
+    const result = await dispatch(fetchCategories()).unwrap();
+    return { success: true, categories: result };
   }, [dispatch]);
 
-  /**
-   * Fetch featured products
-   */
-  const fetchFeatured = useCallback(async () => {
-    try {
-      dispatch(fetchFeaturedStart());
-      const { data } = await api.get('/products/featured');
-      dispatch(fetchFeaturedSuccess(data.data));
-      return { success: true, featured: data.data };
-    } catch (err) {
-      const message = err.response?.data?.message || 'Failed to fetch featured products';
-      dispatch(fetchFeaturedFailure(message));
-      return { success: false, error: message };
-    }
+  const handleFetchFeatured = useCallback(async () => {
+    const result = await dispatch(fetchFeaturedProducts()).unwrap();
+    return { success: true, featured: result };
   }, [dispatch]);
 
-  /**
-   * Search products
-   */
-  const searchProducts = useCallback((query) => {
-    dispatch(setSearchQuery(query));
+  const handleSearchProducts = useCallback(async (query) => {
+    const result = await dispatch(searchProductsAction(query)).unwrap();
+    return { success: true, results: result };
   }, [dispatch]);
 
-  /**
-   * Update filters
-   */
   const updateFilters = useCallback((newFilters) => {
     dispatch(setFilters(newFilters));
   }, [dispatch]);
 
-  /**
-   * Clear all filters
-   */
   const resetFilters = useCallback(() => {
     dispatch(clearFilters());
   }, [dispatch]);
 
-  /**
-   * Change sort order
-   */
   const changeSort = useCallback((sort) => {
     dispatch(setSortBy(sort));
   }, [dispatch]);
 
-  /**
-   * Change page
-   */
   const changePage = useCallback((page) => {
     dispatch(setPage(page));
   }, [dispatch]);
 
-  /**
-   * Sync filters with URL params
-   */
   const syncWithUrl = useCallback(() => {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
@@ -206,45 +102,33 @@ export function useProducts() {
     if (Object.keys(urlFilters).length > 0) {
       dispatch(setFilters(urlFilters));
     }
-    if (search) {
-      dispatch(setSearchQuery(search));
-    }
-    if (sort) {
-      dispatch(setSortBy(sort));
-    }
   }, [dispatch, searchParams]);
 
-  /**
-   * Update URL with current filters
-   */
   const updateUrl = useCallback(() => {
     const params = new URLSearchParams();
     
-    if (searchQuery) params.set('search', searchQuery);
     if (filters.category) params.set('category', filters.category);
     if (filters.minPrice) params.set('minPrice', filters.minPrice.toString());
     if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
-    if (sortBy) params.set('sort', sortBy);
     
     setSearchParams(params, { replace: true });
-  }, [searchQuery, filters, sortBy, setSearchParams]);
+  }, [filters, setSearchParams]);
 
   return {
     products,
     product,
     categories,
     featured,
+    searchResults,
     pagination,
     filters,
-    searchQuery,
-    sortBy,
     loading,
     error,
-    fetchProducts,
-    fetchProduct,
-    fetchCategories,
-    fetchFeatured,
-    searchProducts,
+    fetchProducts: handleFetchProducts,
+    fetchProduct: handleFetchProduct,
+    fetchCategories: handleFetchCategories,
+    fetchFeatured: handleFetchFeatured,
+    searchProducts: handleSearchProducts,
     updateFilters,
     resetFilters,
     changeSort,

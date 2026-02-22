@@ -6,42 +6,32 @@ import {
   clearToasts,
   openModal,
   closeModal,
-  closeAllModals,
   toggleSidebar,
   setSidebarOpen,
   toggleMobileMenu,
   setMobileMenuOpen,
-  setLoading,
+  setPageLoading,
   selectToasts,
-  selectModals,
+  selectModal,
   selectSidebarOpen,
   selectMobileMenuOpen,
-  selectLoading,
-  selectCurrentModal
+  selectIsPageLoading
 } from '../store/slices/uiSlice';
 
-/**
- * Custom hook for UI state management
- */
 export function useUI() {
   const dispatch = useDispatch();
   
   const toasts = useSelector(selectToasts);
-  const modals = useSelector(selectModals);
+  const modal = useSelector(selectModal);
   const sidebarOpen = useSelector(selectSidebarOpen);
   const mobileMenuOpen = useSelector(selectMobileMenuOpen);
-  const loading = useSelector(selectLoading);
+  const loading = useSelector(selectIsPageLoading);
 
-  // ========== Toast Methods ==========
-
-  /**
-   * Show a toast notification
-   */
+  // Toast methods
   const showToast = useCallback((message, type = 'info', duration = 5000) => {
     const id = Date.now().toString();
     dispatch(addToast({ id, message, type, duration }));
     
-    // Auto remove toast
     if (duration > 0) {
       setTimeout(() => {
         dispatch(removeToast(id));
@@ -51,164 +41,35 @@ export function useUI() {
     return id;
   }, [dispatch]);
 
-  /**
-   * Show success toast
-   */
-  const showSuccess = useCallback((message, duration) => {
-    return showToast(message, 'success', duration);
-  }, [showToast]);
+  const showSuccess = useCallback((message, duration) => showToast(message, 'success', duration), [showToast]);
+  const showError = useCallback((message, duration) => showToast(message, 'error', duration), [showToast]);
+  const showWarning = useCallback((message, duration) => showToast(message, 'warning', duration), [showToast]);
+  const showInfo = useCallback((message, duration) => showToast(message, 'info', duration), [showToast]);
+  const hideToast = useCallback((id) => dispatch(removeToast(id)), [dispatch]);
+  const hideAllToasts = useCallback(() => dispatch(clearToasts()), [dispatch]);
 
-  /**
-   * Show error toast
-   */
-  const showError = useCallback((message, duration) => {
-    return showToast(message, 'error', duration);
-  }, [showToast]);
-
-  /**
-   * Show warning toast
-   */
-  const showWarning = useCallback((message, duration) => {
-    return showToast(message, 'warning', duration);
-  }, [showToast]);
-
-  /**
-   * Show info toast
-   */
-  const showInfo = useCallback((message, duration) => {
-    return showToast(message, 'info', duration);
-  }, [showToast]);
-
-  /**
-   * Remove a specific toast
-   */
-  const hideToast = useCallback((id) => {
-    dispatch(removeToast(id));
-  }, [dispatch]);
-
-  /**
-   * Clear all toasts
-   */
-  const hideAllToasts = useCallback(() => {
-    dispatch(clearToasts());
-  }, [dispatch]);
-
-  // ========== Modal Methods ==========
-
-  /**
-   * Open a modal
-   */
+  // Modal methods
   const openModalById = useCallback((modalId, props = {}) => {
     dispatch(openModal({ id: modalId, props }));
   }, [dispatch]);
 
-  /**
-   * Close a specific modal
-   */
-  const closeModalById = useCallback((modalId) => {
-    dispatch(closeModal(modalId));
+  const closeModalById = useCallback(() => {
+    dispatch(closeModal());
   }, [dispatch]);
 
-  /**
-   * Close all modals
-   */
-  const closeAllModalsFn = useCallback(() => {
-    dispatch(closeAllModals());
-  }, [dispatch]);
+  const isModalOpen = useCallback((modalId) => modal?.id === modalId, [modal]);
+  const getModalProps = useCallback(() => modal?.props || {}, [modal]);
 
-  /**
-   * Check if modal is open
-   */
-  const isModalOpen = useCallback((modalId) => {
-    return modals.some(modal => modal.id === modalId);
-  }, [modals]);
+  // Sidebar methods
+  const toggleSidebarFn = useCallback(() => dispatch(toggleSidebar()), [dispatch]);
+  const setSidebarState = useCallback((open) => dispatch(setSidebarOpen(open)), [dispatch]);
 
-  /**
-   * Get modal props
-   */
-  const getModalProps = useCallback((modalId) => {
-    const modal = modals.find(m => m.id === modalId);
-    return modal?.props || {};
-  }, [modals]);
+  // Mobile menu methods
+  const toggleMobileMenuFn = useCallback(() => dispatch(toggleMobileMenu()), [dispatch]);
+  const setMobileMenuState = useCallback((open) => dispatch(setMobileMenuOpen(open)), [dispatch]);
 
-  // Common modals
-  const confirm = useCallback((options) => {
-    const modalId = `confirm-${Date.now()}`;
-    return new Promise((resolve) => {
-      dispatch(openModal({
-        id: modalId,
-        props: {
-          ...options,
-          onConfirm: () => {
-            dispatch(closeModal(modalId));
-            resolve(true);
-          },
-          onCancel: () => {
-            dispatch(closeModal(modalId));
-            resolve(false);
-          }
-        }
-      }));
-    });
-  }, [dispatch]);
-
-  const alert = useCallback((message, title = 'Alert') => {
-    const modalId = `alert-${Date.now()}`;
-    return new Promise((resolve) => {
-      dispatch(openModal({
-        id: modalId,
-        props: {
-          title,
-          message,
-          onConfirm: () => {
-            dispatch(closeModal(modalId));
-            resolve(true);
-          }
-        }
-      }));
-    });
-  }, [dispatch]);
-
-  // ========== Sidebar Methods ==========
-
-  /**
-   * Toggle sidebar
-   */
-  const toggleSidebarFn = useCallback(() => {
-    dispatch(toggleSidebar());
-  }, [dispatch]);
-
-  /**
-   * Set sidebar state
-   */
-  const setSidebarState = useCallback((open) => {
-    dispatch(setSidebarOpen(open));
-  }, [dispatch]);
-
-  // ========== Mobile Menu Methods ==========
-
-  /**
-   * Toggle mobile menu
-   */
-  const toggleMobileMenuFn = useCallback(() => {
-    dispatch(toggleMobileMenu());
-  }, [dispatch]);
-
-  /**
-   * Set mobile menu state
-   */
-  const setMobileMenuState = useCallback((open) => {
-    dispatch(setMobileMenuOpen(open));
-  }, [dispatch]);
-
-  // ========== Loading Methods ==========
-
-  /**
-   * Set loading state
-   */
-  const setLoadingState = useCallback((isLoading) => {
-    dispatch(setLoading(isLoading));
-  }, [dispatch]);
+  // Loading methods
+  const setLoadingState = useCallback((isLoading) => dispatch(setPageLoading(isLoading)), [dispatch]);
 
   return {
     // Toast
@@ -222,14 +83,11 @@ export function useUI() {
     hideAllToasts,
     
     // Modal
-    modals,
+    modal,
     openModal: openModalById,
     closeModal: closeModalById,
-    closeAllModals: closeAllModalsFn,
     isModalOpen,
     getModalProps,
-    confirm,
-    alert,
     
     // Sidebar
     sidebarOpen,

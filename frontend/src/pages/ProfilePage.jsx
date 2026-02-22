@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProfile, updatePassword } from '../store/slices/authSlice';
+import { updateProfile, changePassword } from '../store/slices/authSlice';
 import { showToast } from '../store/slices/uiSlice';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/common/Button';
@@ -89,7 +89,7 @@ const ProfilePage = () => {
       return;
     }
 
-    const result = await dispatch(updatePassword({
+    const result = await dispatch(changePassword({
       currentPassword: passwordData.currentPassword,
       newPassword: passwordData.newPassword,
     }));

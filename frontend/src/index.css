@@ -307,7 +307,11 @@
 
 /* Product card */
 .product-card {
-  @apply card-hover group cursor-pointer;
+  @apply card-hover cursor-pointer;
+}
+
+.product-card.group {
+  @apply relative;
 }
 
 .product-card-image {

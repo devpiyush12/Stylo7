@@ -1,8 +1,7 @@
 /**
  * Global Error Handler Middleware
  */
-
-exports.errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
 
   // Mongoose validation error
@@ -53,7 +52,7 @@ exports.errorHandler = (err, req, res, next) => {
 /**
  * 404 Not Found Handler
  */
-exports.notFound = (req, res) => {
+const notFound = (req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
@@ -61,4 +60,4 @@ exports.notFound = (req, res) => {
   });
 };
 
-module.exports = exports;
+module.exports = { errorHandler, notFound };

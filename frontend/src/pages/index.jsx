@@ -15,8 +15,12 @@ export const RegisterPage = lazy(() => import('./RegisterPage'));
 export const ProfilePage = lazy(() => import('./ProfilePage'));
 
 // Wrapper for lazy loaded components
-export const withSuspense = (Component) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
-);
+export const withSuspense = (Component) => {
+  return function SuspenseWrapper(props) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Component {...props} />
+      </Suspense>
+    );
+  };
+};

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchProductBySlug, fetchProducts } from '../store/slices/productsSlice';
+import { fetchProductById, fetchProducts } from '../store/slices/productsSlice';
 import { addToCart } from '../store/slices/cartSlice';
 import { showToast } from '../store/slices/uiSlice';
 import { PageLoader } from '../components/common/Loader';
@@ -29,7 +29,7 @@ const ProductDetailPage = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchProductBySlug(slug));
+    dispatch(fetchProductById(slug));
     dispatch(fetchProducts({ limit: 4 }));
   }, [dispatch, slug]);
 
